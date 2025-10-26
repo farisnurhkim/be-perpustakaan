@@ -18,6 +18,14 @@ type LoginBody = {
     password: string;
 }
 
+type AlamatBody = {
+    no_rumah: string;
+    nama_jalan: string;
+    kelurahan: string;
+    kecamatan: string;
+    kota: string;
+}
+
 const registerValidateSchema = Yup.object({
     nama: Yup.string().required("Nama is required"),
     email: Yup.string().email("Invalid email format").required("Email is required"),
@@ -135,7 +143,31 @@ export default {
             return res.status(200).json({
                 message: "Akun berhasil diblokir",
                 data: result,
-            })
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Internal server error", error });
+        }
+    },
+
+    ubahAlamat: async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const { no_rumah, nama_jalan, kelurahan, kecamatan, kota } = req.body as unknown as AlamatBody;
+
+        try {
+            const result = await User.findByIdAndUpdate(id, {
+                alamat: {
+                    no_rumah,
+                    nama_jalan,
+                    kelurahan,
+                    kecamatan,
+                    kota
+                }
+            }, { new: true });
+
+            return res.status(200).json({
+                message: "Alamat berhasil diubah",
+                data: result,
+            });
         } catch (error) {
             return res.status(500).json({ message: "Internal server error", error });
         }
