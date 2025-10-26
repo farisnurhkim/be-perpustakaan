@@ -24,6 +24,7 @@ router.delete('/media/delete', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN
 // Buku
 router.post('/buku/buat', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.buatBuku);
 router.get('/buku/list', bukuController.listBuku);
-
+router.get('/buku/:id', bukuController.lihatBuku);
+router.patch('/buku/ubah/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.ubahBuku);
 
 export default router;

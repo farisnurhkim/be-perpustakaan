@@ -44,5 +44,32 @@ export default {
         } catch (error) {
             res.status(500).json({ message: "Gagal mengambil daftar buku", error });
         }
+    },
+
+    async lihatBuku (req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const result = await Buku.findById(id);
+            res.status(200).json({ message: "Berhasil mengambil detail buku", data: result });
+        } catch (error) {
+            res.status(500).json({ message: "Gagal mengambil detail buku", error });
+        }
+    },
+
+    async ubahBuku (req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit } = req.body;
+            const result = await Buku.findByIdAndUpdate(id, {
+                judul_buku,
+                genre_buku,
+                tahun_terbit,
+                penulis,
+                penerbit
+            }, { new: true });
+            res.status(200).json({ message: "Buku berhasil diubah", data: result });
+        } catch (error) {
+            res.status(500).json({ message: "Gagal mengubah buku", error });
+        }
     }
 }
