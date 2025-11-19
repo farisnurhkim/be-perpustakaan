@@ -71,5 +71,51 @@ export default {
         } catch (error) {
             res.status(500).json({ message: "Gagal mengubah buku", error });
         }
+    },
+
+    async hapusBuku (req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const result = await Buku.findByIdAndDelete(id);
+            res.status(200).json({ message: "Buku berhasil dihapus", data: result });
+            
+        } catch (error) {
+            res.status(500).json({ message: "Gagal menghapus buku", error });
+        }
+    },
+
+    async tambahStok (req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const {jumlah} = req.body;
+            const buku = await Buku.findById(id);
+            if (!buku) {
+                return res.status(404).json({ message: "Buku tidak ditemukan" });
+            }
+            buku.stok += jumlah;
+            const result = await buku.save();
+            res.status(200).json({ message: "Stok buku berhasil ditambah", data: result });
+        } catch (error) {
+            res.status(500).json({ message: "Gagal menambah stok buku", error });
+        }
+    },
+
+    async kurangiStok (req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const {jumlah} = req.body;
+            const buku = await Buku.findById(id);
+            if (!buku) {
+                return res.status(404).json({ message: "Buku tidak ditemukan" });
+            }
+            if (buku.stok < jumlah) {
+                return res.status(400).json({ message: "Stok buku tidak mencukupi" });
+            }
+            buku.stok -= jumlah;
+            const result = await buku.save();
+            res.status(200).json({ message: "Stok buku berhasil dikurangi", data: result });
+        } catch (error) {
+            res.status(500).json({ message: "Gagal mengurangi stok buku", error });
+        }
     }
 }

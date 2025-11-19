@@ -26,5 +26,8 @@ router.post('/buku/buat', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], 
 router.get('/buku/list', bukuController.listBuku);
 router.get('/buku/:id', bukuController.lihatBuku);
 router.patch('/buku/ubah/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.ubahBuku);
+router.delete('/buku/hapus/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.hapusBuku);
+router.patch('/buku/tambah-stok/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.tambahStok);
+router.patch('/buku/kurangi-stok/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.kurangiStok);
 
 export default router;
