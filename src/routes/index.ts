@@ -6,6 +6,7 @@ import { USER_STATUS } from '../utils/constants';
 import mediaMiddleware from '../middleware/media.middleware';
 import mediaController from '../controllers/media.controller';
 import bukuController from '../controllers/buku.controller';
+import peminjamanController from '../controllers/peminjaman.controller';
 
 const router = express.Router();
 
@@ -29,5 +30,11 @@ router.patch('/buku/ubah/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN
 router.delete('/buku/hapus/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.hapusBuku);
 router.patch('/buku/tambah-stok/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.tambahStok);
 router.patch('/buku/kurangi-stok/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.kurangiStok);
+
+// Peminjaman
+router.post('/peminjaman/buat', [userMiddleware, aclMiddleware([USER_STATUS.MEMBER])], peminjamanController.buatPeminjaman);
+router.patch('/peminjaman/ubah-status/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], peminjamanController.ubahStatus);
+// hitung denda
+router.get('/peminjaman/hitung-denda/:id', [userMiddleware, aclMiddleware([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], peminjamanController.hitungDenda);
 
 export default router;
