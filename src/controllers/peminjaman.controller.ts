@@ -7,7 +7,6 @@ export default {
             const { id_user, batas_pinjam, detail_peminjaman } = req.body as unknown as {
                 id_user: string;
                 batas_pinjam: Date;
-                batas_ambil: Date;
                 detail_peminjaman: Array<{
                     id_buku: string;
                     jumlah: number;
@@ -95,13 +94,40 @@ export default {
             const batasPinjam = new Date(peminjaman.batas_pinjam);
             const diffTime = Math.abs(now.getTime() - batasPinjam.getTime());
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const dendaPerhari = 3000; // contoh denda per hari
+            const dendaPerhari = 3000; // denda per hari
             const totalDenda = diffDays * dendaPerhari;
             res.status(200).json({
                 message: "Perhitungan denda berhasil",
                 data: { totalDenda },
             });
 
+        } catch (error) {
+            res.status(500).json({ message: "Internal server error", error });
+        }
+    },
+
+    async daftarSemuaPeminjaman (req: Request, res: Response) {
+        try {
+            const peminjamanList = await Peminjaman.find();
+            res.status(200).json({
+                message: "Daftar semua peminjaman berhasil diambil",
+                data: peminjamanList,
+            });
+            
+        } catch (error) {
+            res.status(500).json({ message: "Internal server error", error });
+        }
+    },
+
+    async daftarPeminjamanUser (req: Request, res: Response) {
+        try {
+            const { id_user } = req.params;
+            const peminjamanList = await Peminjaman.find({id_user});
+            res.status(200).json({
+                message: "Daftar peminjaman user berhasil diambil",
+                data: peminjamanList,
+            });
+            
         } catch (error) {
             res.status(500).json({ message: "Internal server error", error });
         }
