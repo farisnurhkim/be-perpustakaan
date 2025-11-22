@@ -4,8 +4,9 @@ import Peminjaman from "../models/peminjaman.model";
 export default {
     async buatPeminjaman (req: Request, res: Response) {
         try {
-            const { id_user, batas_pinjam, detail_peminjaman } = req.body as unknown as {
+            const { id_user, batas_pinjam, detail_peminjaman, tanggal_pinjam } = req.body as unknown as {
                 id_user: string;
+                tanggal_pinjam: Date;
                 batas_pinjam: Date;
                 detail_peminjaman: Array<{
                     id_buku: string;
@@ -23,17 +24,23 @@ export default {
             }
 
             const barcode = `PMJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const batas_ambil = new Date();
-            // batas ambil 1 hari dari sekarang
+            const batas_ambil = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
+
+            // batas ambil 1 hari dari tanggal pinjam
             batas_ambil.setDate(batas_ambil.getDate() + 1);
 
             const now = new Date();
             if (new Date(batas_pinjam) <= now) {
                 return res.status(400).json({ message: "Batas pinjam harus lebih dari tanggal sekarang" });
             }
+
+            if (new Date(batas_pinjam) <= new Date(tanggal_pinjam)) {
+                return res.status(400).json({ message: "Batas pinjam harus lebih dari tanggal pinjam" });
+            }
             
-            const maxBatasPinjam = new Date();
-            maxBatasPinjam.setDate(now.getDate() + 21);
+            const maxBatasPinjam = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
+            maxBatasPinjam.setDate(maxBatasPinjam.getDate() + 21); // maksimal 21 hari dari tanggal pinjam
+            
             if (new Date(batas_pinjam) > maxBatasPinjam) {
                 return res.status(400).json({ message: "Batas pinjam maksimal 21 hari dari sekarang" });
             }
@@ -42,6 +49,7 @@ export default {
                 barcode,
                 id_user,
                 batas_pinjam,
+                tgl_pinjam: tanggal_pinjam,
                 batas_ambil,
                 detail_peminjaman
             });

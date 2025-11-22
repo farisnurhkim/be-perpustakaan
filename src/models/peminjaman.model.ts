@@ -16,7 +16,7 @@ export interface IPeminjaman extends mongoose.Document {
 const PeminjamanSchema = new mongoose.Schema<IPeminjaman>({
     barcode: { type: String, required: true, unique: true },
     id_user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    tgl_pinjam: { type: Date, required: true, default: Date.now },
+    tgl_pinjam: { type: Date, required: true, default: null },
     batas_pinjam: { type: Date, required: true },
     batas_ambil: { type: Date, required: true },
     status: {type: String, enum: ['dipinjam', 'dikembalikan', 'terlambat'], required: true, default: 'dipinjam' },
