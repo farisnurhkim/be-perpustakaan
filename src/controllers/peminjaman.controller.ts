@@ -6,8 +6,8 @@ export default {
         try {
             const { id_user, batas_pinjam, detail_peminjaman, tanggal_pinjam } = req.body as unknown as {
                 id_user: string;
-                tanggal_pinjam: Date;
-                batas_pinjam: Date;
+                tanggal_pinjam: string;
+                batas_pinjam: string;
                 detail_peminjaman: Array<{
                     id_buku: string;
                     jumlah: number;
@@ -24,32 +24,42 @@ export default {
             }
 
             const barcode = `PMJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const batas_ambil = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
 
-            // batas ambil 1 hari dari tanggal pinjam
-            batas_ambil.setDate(batas_ambil.getDate() + 1);
-
-            const now = new Date();
-            if (new Date(batas_pinjam) <= now) {
-                return res.status(400).json({ message: "Batas pinjam harus lebih dari tanggal sekarang" });
+            const tgl_pinjam = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
+            if (isNaN(tgl_pinjam.getTime())) {
+                return res.status(400).json({ message: "Tanggal pinjam tidak valid" });
             }
 
-            if (new Date(batas_pinjam) <= new Date(tanggal_pinjam)) {
+            // batas ambil 1 hari dari tanggal pinjam
+            const batas_ambil = new Date(tgl_pinjam);
+            batas_ambil.setDate(batas_ambil.getDate() + 1);
+
+            const batasPinjamDate = new Date(batas_pinjam);
+            if (isNaN(batasPinjamDate.getTime())) {
+                return res.status(400).json({ message: "Batas pinjam tidak valid" });
+            }
+
+            const now = new Date();
+            if (tgl_pinjam < now) {
+                return res.status(400).json({ message: "Tanggal pinjam harus mulai/lebih dari hari sekarang" });
+            }
+
+            if (batasPinjamDate <= tgl_pinjam) {
                 return res.status(400).json({ message: "Batas pinjam harus lebih dari tanggal pinjam" });
             }
             
-            const maxBatasPinjam = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
+            const maxBatasPinjam = new Date(tgl_pinjam);
             maxBatasPinjam.setDate(maxBatasPinjam.getDate() + 21); // maksimal 21 hari dari tanggal pinjam
             
-            if (new Date(batas_pinjam) > maxBatasPinjam) {
-                return res.status(400).json({ message: "Batas pinjam maksimal 21 hari dari sekarang" });
+            if (batasPinjamDate > maxBatasPinjam) {
+                return res.status(400).json({ message: "Batas pinjam maksimal 21 hari dari tanggal_pinjam" });
             }
 
             const result = await Peminjaman.create({
                 barcode,
                 id_user,
-                batas_pinjam,
-                tgl_pinjam: tanggal_pinjam,
+                batas_pinjam: batasPinjamDate,
+                tgl_pinjam,
                 batas_ambil,
                 detail_peminjaman
             });
