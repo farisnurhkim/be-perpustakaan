@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import Peminjaman from "../models/peminjaman.model";
 import mongoose from "mongoose";
+import Controller from "./controller";
 
-export default {
-    async buatPeminjaman(req: Request, res: Response) {
+class PeminjamanController extends Controller {
+    buatPeminjaman = async (req: Request, res: Response) => {
         try {
             const { id_user, batas_pinjam, detail_peminjaman, tanggal_pinjam } = req.body as unknown as {
                 id_user: string;
@@ -20,18 +21,18 @@ export default {
                 status: { $in: ["dipinjam", "pending_peminjaman"] }
             });
             if (peminjamanAktif) {
-                return res.status(400).json({ message: "Kamu masih memiliki peminjaman aktif" });
+                return this.error(res, "Kamu masih memiliki peminjaman aktif", 400);
             }
 
             if (detail_peminjaman.length > 3) {
-                return res.status(400).json({ message: "Maksimal peminjaman adalah 3 buku" });
+                return this.error(res, "Maksimal peminjaman adalah 3 buku", 400);
             }
 
             const barcode = `PMJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
             const tgl_pinjam = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
             if (isNaN(tgl_pinjam.getTime())) {
-                return res.status(400).json({ message: "Tanggal pinjam tidak valid" });
+                return this.error(res, "Tanggal pinjam tidak valid", 400);
             }
 
             // batas ambil 1 hari dari tanggal pinjam
@@ -40,23 +41,23 @@ export default {
 
             const batasPinjamDate = new Date(batas_pinjam);
             if (isNaN(batasPinjamDate.getTime())) {
-                return res.status(400).json({ message: "Batas pinjam tidak valid" });
+                return this.error(res, "Batas pinjam tidak valid", 400);
             }
 
             const now = new Date();
             if (tgl_pinjam < now) {
-                return res.status(400).json({ message: "Tanggal pinjam harus mulai/lebih dari hari sekarang" });
+                return this.error(res, "Tanggal pinjam harus mulai/lebih dari hari sekarang", 400);
             }
 
             if (batasPinjamDate <= tgl_pinjam) {
-                return res.status(400).json({ message: "Batas pinjam harus lebih dari tanggal pinjam" });
+                return this.error(res, "Batas pinjam harus lebih dari tanggal pinjam", 400);
             }
 
             const maxBatasPinjam = new Date(tgl_pinjam);
             maxBatasPinjam.setDate(maxBatasPinjam.getDate() + 21); // maksimal 21 hari dari tanggal pinjam
 
             if (batasPinjamDate > maxBatasPinjam) {
-                return res.status(400).json({ message: "Batas pinjam maksimal 21 hari dari tanggal_pinjam" });
+                return this.error(res, "Maksimal batas pinjam adalah 21 hari dari tanggal pinjam", 400);
             }
 
             const result = await Peminjaman.create({
@@ -67,90 +68,78 @@ export default {
                 batas_ambil,
                 detail_peminjaman
             });
-            res.status(200).json({
-                message: "Peminjaman berhasil dibuat",
-                data: result,
-            });
+            this.success(res, "Peminjaman berhasil dibuat", result);
 
         } catch (error) {
-            res.status(500).json({ message: "Internal server error", error });
+            this.error(res, "Internal server error", 500);
         }
-    },
+    }
 
-    async konfirmasiPeminjaman(req: Request, res: Response) {
+    konfirmasiPeminjaman = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const result = await Peminjaman.findByIdAndUpdate(id, { status: 'dipinjam' }, { new: true });
-            res.status(200).json({
-                message: "Peminjaman berhasil di Konfirmasi",
-                data: result,
-            });
+            this.success(res, "Peminjaman berhasil di Konfirmasi", result);
+            
         } catch (error) {
-            res.status(500).json({ message: "Internal server error", error });
+            this.error(res, "Internal Server Error", 500);
         }
-    },
+    }
 
-    async hitungDenda(req: Request, res: Response) {
+    hitungDenda = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const peminjaman = await Peminjaman.findById(id);
 
             if (!peminjaman) {
-                return res.status(404).json({ message: "Peminjaman tidak ditemukan" });
+                return this.error(res, "Peminjaman tidak ditemukan", 404);
             }
 
             if (peminjaman.status === "dikembalikan" || peminjaman.status === "pending_pengembalian") {
-                return res.status(400).json({ message: "Peminjaman tidak dalam status terlambat" });
+                return this.error(res, "Peminjaman tidak dalam status terlambat", 400);
             }
 
             const now = new Date();
             const batasPinjam = new Date(peminjaman.batas_pinjam);
 
             if (now <= batasPinjam) {
-                return res.status(200).json({ message: "Belum terlambat", data: { totalDenda: 0 } });
+                return this.success(res, "Tidak ada denda", { totalDenda: 0 });
             }
 
             const diffTime = now.getTime() - batasPinjam.getTime();
             const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
             const dendaPerhari = 3000; // denda per hari
             const totalDenda = diffDays * dendaPerhari;
-            res.status(200).json({
-                message: "Perhitungan denda berhasil",
-                data: { totalDenda },
-            });
+            this.success(res, "Perhitungan denda berhasil", { totalDenda });
 
         } catch (error) {
-            res.status(500).json({ message: "Internal server error", error });
+            this.error(res, "Internal Server Error", 500);
         }
-    },
+    }
 
-    async daftarSemuaPeminjaman(req: Request, res: Response) {
+    daftarSemuaPeminjaman = async(req: Request, res: Response) => {
         try {
             const peminjamanList = await Peminjaman.find();
-            res.status(200).json({
-                message: "Daftar semua peminjaman berhasil diambil",
-                data: peminjamanList,
-            });
+            this.success(res, "Daftar semua peminjaman berhasil diambil", peminjamanList);
 
         } catch (error) {
-            res.status(500).json({ message: "Internal server error", error });
+            this.error(res, "Internal server error", 500);
         }
-    },
+    }
 
-    async daftarPeminjamanUser(req: Request, res: Response) {
+    daftarPeminjamanUser = async(req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const peminjamanList = await Peminjaman.find({
                 id_user: new mongoose.Types.ObjectId(id)
             });
 
-            res.status(200).json({
-                message: "Daftar peminjaman user berhasil diambil",
-                data: peminjamanList,
-            });
+            this.success(res, "Daftar peminjaman user berhasil diambil", peminjamanList);
 
         } catch (error) {
-            res.status(500).json({ message: "Internal server error", error });
+            this.error(res, "Internal server error", 500);
         }
     }
 }
+
+export default new PeminjamanController();

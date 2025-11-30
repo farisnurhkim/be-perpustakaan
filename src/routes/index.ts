@@ -6,7 +6,7 @@ import { USER_STATUS } from '../utils/constants';
 import mediaMiddleware from '../middleware/media.middleware';
 import mediaController from '../controllers/media.controller';
 import BukuController from '../controllers/buku.controller';
-import peminjamanController from '../controllers/peminjaman.controller';
+import PeminjamanController from '../controllers/peminjaman.controller';
 import pengembalianController from '../controllers/pengembalian.controller';
 import UserMiddleware from '../middleware/user.middleware';
 
@@ -37,15 +37,13 @@ router.patch('/buku/tambah-stok/:id', [auth.handle, aclMiddleware.handle([USER_S
 router.patch('/buku/kurangi-stok/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.kurangiStok);
 
 // Peminjaman
-router.get('/peminjaman/list', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], peminjamanController.daftarSemuaPeminjaman);
-
-router.get('/peminjaman/user/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], peminjamanController.daftarPeminjamanUser);
-
-router.post('/peminjaman/buat', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], peminjamanController.buatPeminjaman);
-router.patch('/peminjaman/konfirmasi/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], peminjamanController.konfirmasiPeminjaman);
+router.get('/peminjaman/list', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], PeminjamanController.daftarSemuaPeminjaman);
+router.get('/peminjaman/user/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.daftarPeminjamanUser);
+router.post('/peminjaman/buat', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], PeminjamanController.buatPeminjaman);
+router.patch('/peminjaman/konfirmasi/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], PeminjamanController.konfirmasiPeminjaman);
 
 // hitung denda
-router.get('/peminjaman/hitung-denda/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], peminjamanController.hitungDenda);
+router.get('/peminjaman/hitung-denda/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.hitungDenda);
 
 // Pengembalian
 router.patch('/pengembalian/proses/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], pengembalianController.prosesPengembalian);
