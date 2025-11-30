@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import Buku, { IBuku } from "../models/buku.model";
 import { FilterQuery } from "mongoose";
+import Controller from "./controller";
 
-export default {
-    async buatBuku (req: Request, res: Response) {
+class BukuController extends Controller {
+    buatBuku = async (req: Request, res: Response) => {
         try {
             const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit, stok } = req.body;
             
@@ -15,14 +16,15 @@ export default {
                 penerbit,
                 stok
             });
-            res.status(200).json({ message: "Buku berhasil dibuat", data: result });
-            
-        } catch (error) {
-            res.status(500).json({ message: "Gagal membuat buku", error });
-        }
-    },
 
-    async listBuku (req: Request, res: Response) {
+            this.success(res, "Buku berhasil dibuat", result);
+
+        } catch (error) {
+            this.error(res, "Internal Server Error", 500);
+        }
+    }
+
+    listBuku = async (req: Request, res: Response) => {
         try {
             const { category = "", search = "" } = req.query as unknown as { category: string, search: string };
             const query: FilterQuery<IBuku> = {};
@@ -39,24 +41,25 @@ export default {
             }
 
             const result = await Buku.find(query).sort({createdAt: -1}).exec();
-            res.status(200).json({ message: "Berhasil mengambil daftar buku", data: result });
+            this.success(res, "Berhasil mengambil daftar buku", result);
 
         } catch (error) {
-            res.status(500).json({ message: "Gagal mengambil daftar buku", error });
+            this.error(res, "Gagal mengambil daftar buku", 500);
         }
-    },
+    }
 
-    async lihatBuku (req: Request, res: Response) {
+    lihatBuku = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const result = await Buku.findById(id);
-            res.status(200).json({ message: "Berhasil mengambil detail buku", data: result });
-        } catch (error) {
-            res.status(500).json({ message: "Gagal mengambil detail buku", error });
-        }
-    },
+            this.success(res, "Berhasil mengambil detail buku", result);
 
-    async ubahBuku (req: Request, res: Response) {
+        } catch (error) {
+            this.error(res, "Internal Server Error", 500);
+        }
+    }
+
+    ubahBuku = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit } = req.body;
@@ -67,55 +70,58 @@ export default {
                 penulis,
                 penerbit
             }, { new: true });
-            res.status(200).json({ message: "Buku berhasil diubah", data: result });
+            this.success(res, "Buku berhasil diubah", result);
         } catch (error) {
-            res.status(500).json({ message: "Gagal mengubah buku", error });
+            this.error(res, "Internal Server Error", 500);
         }
-    },
+    }
 
-    async hapusBuku (req: Request, res: Response) {
+    hapusBuku = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const result = await Buku.findByIdAndDelete(id);
-            res.status(200).json({ message: "Buku berhasil dihapus", data: result });
+            this.success(res, "Buku berhasil dihapus", result);
             
         } catch (error) {
-            res.status(500).json({ message: "Gagal menghapus buku", error });
+            this.error(res, "Internal Server Error", 500);
         }
-    },
+    }
 
-    async tambahStok (req: Request, res: Response) {
+    tambahStok = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const {jumlah} = req.body;
             const buku = await Buku.findById(id);
             if (!buku) {
-                return res.status(404).json({ message: "Buku tidak ditemukan" });
+                return this.error(res, "Buku tidak ditemukan", 404);
             }
             buku.stok += jumlah;
             const result = await buku.save();
-            res.status(200).json({ message: "Stok buku berhasil ditambah", data: result });
-        } catch (error) {
-            res.status(500).json({ message: "Gagal menambah stok buku", error });
-        }
-    },
 
-    async kurangiStok (req: Request, res: Response) {
+            this.success(res, "Stok buku berhasil ditambah", result);
+        } catch (error) {
+            this.error(res, "Internal Server Error", 500);
+        }
+    }
+
+    kurangiStok = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const {jumlah} = req.body;
             const buku = await Buku.findById(id);
             if (!buku) {
-                return res.status(404).json({ message: "Buku tidak ditemukan" });
+                return this.error(res, "Buku tidak ditemukan", 404);
             }
             if (buku.stok < jumlah) {
-                return res.status(400).json({ message: "Stok buku tidak mencukupi" });
+                return this.error(res, "Stok buku tidak mencukupi", 400);
             }
             buku.stok -= jumlah;
             const result = await buku.save();
-            res.status(200).json({ message: "Stok buku berhasil dikurangi", data: result });
+            this.success(res, "Stok buku berhasil dikurangi", result);
         } catch (error) {
-            res.status(500).json({ message: "Gagal mengurangi stok buku", error });
+            this.error(res, "Internal Server Error", 500);
         }
     }
 }
+
+export default new BukuController();

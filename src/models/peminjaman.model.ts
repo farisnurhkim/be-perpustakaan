@@ -6,7 +6,7 @@ export interface IPeminjaman extends mongoose.Document {
     tgl_pinjam: Date;
     batas_pinjam: Date;
     batas_ambil: Date;
-    status: 'dipinjam' | 'dikembalikan' | 'terlambat';
+    status: 'dipinjam' | 'dikembalikan' | 'terlambat' | 'pending_pengembalian' | 'pending_peminjaman';
     detail_peminjaman: Array<{
         id_buku: mongoose.Types.ObjectId;
         jumlah: number;
@@ -19,7 +19,7 @@ const PeminjamanSchema = new mongoose.Schema<IPeminjaman>({
     tgl_pinjam: { type: Date, required: true, default: null },
     batas_pinjam: { type: Date, required: true },
     batas_ambil: { type: Date, required: true },
-    status: {type: String, enum: ['dipinjam', 'dikembalikan', 'terlambat'], required: true, default: 'dipinjam' },
+    status: {type: String, enum: ['dipinjam', 'dikembalikan', 'terlambat', 'pending_pengembalian', 'pending_peminjaman'], required: true, default: 'pending_peminjaman' },
     detail_peminjaman: [{
         id_buku: { type: mongoose.Schema.Types.ObjectId, ref: 'Buku', required: true },
         jumlah: { type: Number, required: true },

@@ -5,6 +5,7 @@ import User from "../models/user.model";
 import { IReqUser } from "../utils/interfaces";
 import { generateToken } from "../utils/jwt";
 import { Types } from "mongoose";
+import Controller from "./controller";
 
 type RegisterBody = {
     nama: string;
@@ -33,8 +34,8 @@ const registerValidateSchema = Yup.object({
     confirmPassword: Yup.string().oneOf([Yup.ref("password")], "Passwords must match").required("Confirm Password is required"),
 })
 
-export default {
-    register: async (req: Request, res: Response) => {
+class UserController extends Controller {
+    register = async (req: Request, res: Response) => {
         const { nama, email, password, confirmPassword } = req.body as unknown as RegisterBody;
         try {
             await registerValidateSchema.validate({
@@ -47,7 +48,7 @@ export default {
 
             const existingUser = await User.findOne({ email });
             if (existingUser) {
-                return res.status(400).json({ message: "Email sudah digunakan" });
+                return this.error(res, "Email sudah terdaftar", 400);
             }
 
             const result = await User.create({
@@ -56,29 +57,26 @@ export default {
                 password: hashedPassword,
             })
 
-            return res.status(200).json({
-                message: "User registered successfully",
-                data: result,
-            })
+            return this.success(res, "User registered successfully", result);
 
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error", error });
+            return this.error(res, "Internal server error", 500);
         }
 
-    },
+    }
 
-    login: async (req: Request, res: Response) => {
+    login = async (req: Request, res: Response) => {
         const { email, password } = req.body as unknown as LoginBody;
         try {
             const user = await User.findOne({ email });
             if (!user) {
-                return res.status(400).json({ message: "Invalid email or password" });
+                return this.error(res, "Invalid email or password", 400);
             }
 
             const isPasswordValid: boolean = await bcrypt.compare(password, user.password);
 
             if (!isPasswordValid) {
-                return res.status(400).json({ message: "Invalid email or password" });
+                return this.error(res, "Invalid email or password", 400);
             }
 
             const token = generateToken({
@@ -87,33 +85,27 @@ export default {
                 status_user: user.status_user,
                 email: user.email,
             });
-
-            return res.status(200).json({
-                message: "Login successful",
-                data: token,
-            });
+ 
+            return this.success(res, "Login successful", token);
 
 
         }catch (error) {
-            return res.status(500).json({ message: "Internal server error", error });
+            return this.error(res, "Internal server error", 500);
         }
-    },
+    }
 
-    profile: async (req: Request, res: Response) => {
+   profile = async (req: Request, res: Response) => {
         try {
             const user = (req as unknown as IReqUser).user;
             const result = await User.findById(user?.id);
-            return res.status(200).json({
-                message: "User fetched successfully",
-                data: result,
-            })
+            return this.success(res, "User fetched successfully", result);
             
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error", error });
+            return this.error(res, "Internal server error", 500);
         }
-    },
+    }
 
-    ubahProfil: async (req: Request, res: Response) => {
+    ubahProfil = async (req: Request, res: Response) => {
         const { nama, email, no_telp, tgl_lahir } = req.body;
         try {
             const { id } = req.params;
@@ -124,32 +116,28 @@ export default {
                 tgl_lahir,
             }, {new: true});
 
-            return res.status(200).json({
-                message: "Profile kamu berhasil diubah",
-                data: result,
-            })
+            return this.success(res, "Profile kamu berhasil diubah", result);
 
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error", error });
+            return this.error(res, "Internal server error", 500);
         }
-    },
+    }
 
-    blokirAkun: async (req: Request, res: Response) => {
+    blokirAkun = async (req: Request, res: Response) => {
         const { id } = req.params;
         try {
             const result = await User.findByIdAndUpdate(id, {
                 di_blokir: true
             }, { new: true });
-            return res.status(200).json({
-                message: "Akun berhasil diblokir",
-                data: result,
-            });
-        } catch (error) {
-            return res.status(500).json({ message: "Internal server error", error });
-        }
-    },
 
-    ubahAlamat: async (req: Request, res: Response) => {
+            return this.success(res, "Akun berhasil diblokir", result);
+
+        } catch (error) {
+            return this.error(res, "Internal server error", 500);
+        }
+    }
+
+    ubahAlamat = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { no_rumah, nama_jalan, kelurahan, kecamatan, kota } = req.body as unknown as AlamatBody;
 
@@ -164,12 +152,12 @@ export default {
                 }
             }, { new: true });
 
-            return res.status(200).json({
-                message: "Alamat berhasil diubah",
-                data: result,
-            });
+            return this.success(res, "Alamat berhasil diubah", result);
+            
         } catch (error) {
-            return res.status(500).json({ message: "Internal server error", error });
+            return this.error(res, "Internal server error", 500);
         }
     }
 }
+
+export default new UserController();

@@ -1,44 +1,54 @@
 import express from 'express';
-import userMiddleware from '../middleware/user.middleware';
-import userController from '../controllers/user.controller';
-import aclMiddleware from '../middleware/acl.middleware';
+
+import UserController from '../controllers/user.controller';
+import ACLMiddleware from '../middleware/acl.middleware';
 import { USER_STATUS } from '../utils/constants';
 import mediaMiddleware from '../middleware/media.middleware';
 import mediaController from '../controllers/media.controller';
-import bukuController from '../controllers/buku.controller';
+import BukuController from '../controllers/buku.controller';
 import peminjamanController from '../controllers/peminjaman.controller';
 import pengembalianController from '../controllers/pengembalian.controller';
+import UserMiddleware from '../middleware/user.middleware';
 
 const router = express.Router();
+const auth = new UserMiddleware();
+const aclMiddleware = new ACLMiddleware();
+
 
 // User
-router.post('/user/register', userController.register);
-router.post('/user/login', userController.login);
-router.get('/user/profile', userMiddleware, userController.profile);
-router.patch('/user/ubah/:id', userMiddleware, userController.ubahProfil);
-router.patch('/user/blokir/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], userController.blokirAkun);
-router.patch('/user/ubah-alamat/:id', userMiddleware, userController.ubahAlamat);
+router.post('/user/register', UserController.register);
+router.post('/user/login', UserController.login);
+router.get('/user/profile', auth.handle, UserController.profile);
+router.patch('/user/ubah/:id', auth.handle, UserController.ubahProfil);
+router.patch('/user/blokir/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], UserController.blokirAkun);
+router.patch('/user/ubah-alamat/:id', auth.handle, UserController.ubahAlamat);
 
 // Media
-router.post('/media/upload', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN]), mediaMiddleware.single('file')], mediaController.single);
-router.delete('/media/delete', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], mediaController.delete);
+router.post('/media/upload', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN]), mediaMiddleware.single('file')], mediaController.single);
+router.delete('/media/delete', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], mediaController.delete);
 
 // Buku
-router.post('/buku/buat', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.buatBuku);
-router.get('/buku/list', bukuController.listBuku);
-router.get('/buku/:id', bukuController.lihatBuku);
-router.patch('/buku/ubah/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.ubahBuku);
-router.delete('/buku/hapus/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.hapusBuku);
-router.patch('/buku/tambah-stok/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.tambahStok);
-router.patch('/buku/kurangi-stok/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], bukuController.kurangiStok);
+router.post('/buku/buat', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.buatBuku);
+router.get('/buku/list', BukuController.listBuku);
+router.get('/buku/:id', BukuController.lihatBuku);
+router.patch('/buku/ubah/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.ubahBuku);
+router.delete('/buku/hapus/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.hapusBuku);
+router.patch('/buku/tambah-stok/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.tambahStok);
+router.patch('/buku/kurangi-stok/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.kurangiStok);
 
 // Peminjaman
-router.post('/peminjaman/buat', [userMiddleware, aclMiddleware([USER_STATUS.MEMBER])], peminjamanController.buatPeminjaman);
-router.patch('/peminjaman/ubah-status/:id', [userMiddleware, aclMiddleware([USER_STATUS.ADMIN])], peminjamanController.ubahStatus);
+router.get('/peminjaman/list', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], peminjamanController.daftarSemuaPeminjaman);
+
+router.get('/peminjaman/user/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], peminjamanController.daftarPeminjamanUser);
+
+router.post('/peminjaman/buat', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], peminjamanController.buatPeminjaman);
+router.patch('/peminjaman/konfirmasi/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], peminjamanController.konfirmasiPeminjaman);
+
 // hitung denda
-router.get('/peminjaman/hitung-denda/:id', [userMiddleware, aclMiddleware([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], peminjamanController.hitungDenda);
+router.get('/peminjaman/hitung-denda/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], peminjamanController.hitungDenda);
 
 // Pengembalian
-router.post('/pengembalian/proses/:barcode', [userMiddleware, aclMiddleware([USER_STATUS.MEMBER])], pengembalianController.prosesPengembalian);
+router.patch('/pengembalian/proses/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], pengembalianController.prosesPengembalian);
+router.post('/pengembalian/konfirmasi/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], pengembalianController.konfirmasiPengembalian);
 
 export default router;
