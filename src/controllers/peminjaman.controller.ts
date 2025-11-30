@@ -140,6 +140,22 @@ class PeminjamanController extends Controller {
             this.error(res, "Internal server error", 500);
         }
     }
+
+     cariPeminjaman = async (req: Request, res: Response) => {
+        try {
+            const { barcode } = req.params;
+            const peminjaman = await Peminjaman.findOne({ barcode, status: 'pending_peminjaman' });
+
+            if (!peminjaman) {
+                return this.error(res, "Peminjaman tidak ditemukan", 404);
+            }
+
+            this.success(res, "Berhasil mengambil data peminjaman", peminjaman);
+
+        } catch (error) {
+            this.error(res, "Internal Server Error", 500);
+        }
+    }
 }
 
 export default new PeminjamanController();

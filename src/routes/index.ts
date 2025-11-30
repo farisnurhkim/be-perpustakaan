@@ -41,6 +41,7 @@ router.get('/peminjaman/list', [auth.handle, aclMiddleware.handle([USER_STATUS.A
 router.get('/peminjaman/user/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.daftarPeminjamanUser);
 router.post('/peminjaman/buat', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], PeminjamanController.buatPeminjaman);
 router.patch('/peminjaman/konfirmasi/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], PeminjamanController.konfirmasiPeminjaman);
+router.get('/peminjaman/cari/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.cariPeminjaman);
 
 // hitung denda
 router.get('/peminjaman/hitung-denda/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.hitungDenda);
@@ -48,5 +49,6 @@ router.get('/peminjaman/hitung-denda/:id', [auth.handle, aclMiddleware.handle([U
 // Pengembalian
 router.patch('/pengembalian/proses/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], pengembalianController.prosesPengembalian);
 router.post('/pengembalian/konfirmasi/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], pengembalianController.konfirmasiPengembalian);
+router.get('/pengembalian/cari/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], pengembalianController.cariPengembalian);
 
 export default router;
