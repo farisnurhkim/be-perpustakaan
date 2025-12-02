@@ -3,9 +3,9 @@ import * as Yup from "yup";
 import bcrypt from "bcrypt";
 import User from "../models/user.model";
 import { IReqUser } from "../utils/interfaces";
-import { generateToken } from "../utils/jwt";
 import { Types } from "mongoose";
 import Controller from "./controller";
+import JWTService from "../utils/jwt";
 
 type RegisterBody = {
     nama: string;
@@ -79,7 +79,7 @@ class UserController extends Controller {
                 return this.error(res, "Invalid email or password", 400);
             }
 
-            const token = generateToken({
+            const token = JWTService.generateToken({
                 id: user._id as Types.ObjectId,
                 nama: user.nama,
                 status_user: user.status_user,

@@ -45,6 +45,8 @@ class PeminjamanController extends Controller {
             }
 
             const now = new Date();
+            tgl_pinjam.setHours(0,0,0,0);
+            now.setHours(0,0,0,0);
             if (tgl_pinjam < now) {
                 return this.error(res, "Tanggal pinjam harus mulai/lebih dari hari sekarang", 400);
             }
@@ -77,8 +79,11 @@ class PeminjamanController extends Controller {
 
     konfirmasiPeminjaman = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
-            const result = await Peminjaman.findByIdAndUpdate(id, { status: 'dipinjam' }, { new: true });
+            const { barcode } = req.params;
+            const result = await Peminjaman.findOneAndUpdate({ barcode, status: "pending_peminjaman" }, { status: "dipinjam" }, { new: true });
+            if (!result) {
+                return this.error(res, "Peminjaman tidak ditemukan atau sudah dikonfirmasi", 404);
+            }
             this.success(res, "Peminjaman berhasil di Konfirmasi", result);
             
         } catch (error) {
@@ -119,7 +124,7 @@ class PeminjamanController extends Controller {
 
     daftarSemuaPeminjaman = async(req: Request, res: Response) => {
         try {
-            const peminjamanList = await Peminjaman.find();
+            const peminjamanList = await Peminjaman.find().populate('id_user').exec();
             this.success(res, "Daftar semua peminjaman berhasil diambil", peminjamanList);
 
         } catch (error) {
@@ -144,7 +149,7 @@ class PeminjamanController extends Controller {
      cariPeminjaman = async (req: Request, res: Response) => {
         try {
             const { barcode } = req.params;
-            const peminjaman = await Peminjaman.findOne({ barcode, status: 'pending_peminjaman' });
+            const peminjaman = await Peminjaman.findOne({ barcode });
 
             if (!peminjaman) {
                 return this.error(res, "Peminjaman tidak ditemukan", 404);

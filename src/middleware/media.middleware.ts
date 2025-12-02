@@ -1,10 +1,17 @@
 import multer from "multer";
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
-export default {
-    single (fieldName: string) {
-        return upload.single(fieldName);
+class UploadMiddleware {
+    private upload;
+
+    constructor() {
+        const storage = multer.memoryStorage();
+        this.upload = multer({ storage });
+    }
+
+    single(fieldName: string) {
+        return this.upload.single(fieldName);
     }
 }
+
+export default new UploadMiddleware();

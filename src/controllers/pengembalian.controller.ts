@@ -45,22 +45,27 @@ class PengembalianController extends Controller {
             });
             await peminjaman.save();
             res.status(200).json({
-                message: "Pengembalian berhasil diproses",
+                message: "Pengembalian berhasil dikonfirmasi",
                 data: resultPengembalian,
             });
 
 
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: "Internal Server Error", error });
         }
     }
 
     prosesPengembalian = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
-            const result = await Peminjaman.findByIdAndUpdate(id, { status: 'pending_pengembalian' }, { new: true });
-            this.success(res, "Pengembalian berhasil diproses. Silakan menuju meja admin untuk melakukan ACC pengembalian.", result);
+            const { barcode } = req.params;
+            const result = await Peminjaman.findOneAndUpdate({ barcode, status: "dipinjam" }, { status: "pending_pengembalian" }, { new: true });
 
+            if (!result) {
+                return this.error(res, "Peminjaman tidak ditemukan atau tidak dalam status dipinjam", 404);
+            }
+
+            this.success(res, "Pengembalian berhasil diproses. Silakan menuju meja admin untuk melakukan ACC pengembalian.", result);
         } catch (error) {
             this.error(res, "Internal Server Error", 500);
         }

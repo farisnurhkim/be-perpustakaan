@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { getProfile } from "../utils/jwt";
 import { IReqUser } from "../utils/interfaces";
+import JWTService from "../utils/jwt";
 
 export default class UserMiddleware {
     handle = (req: Request, res: Response, next: NextFunction) => {
@@ -13,7 +13,7 @@ export default class UserMiddleware {
             return res.status(401).json({ message: "Unauthorized" });
         }
     
-        const user = getProfile(token);
+        const user = JWTService.getProfile(token);
         if (!user) {
             return res.status(401).json({ message: "Unauthorized" });
         }

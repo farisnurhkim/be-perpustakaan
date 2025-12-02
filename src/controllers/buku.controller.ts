@@ -6,7 +6,7 @@ import Controller from "./controller";
 class BukuController extends Controller {
     buatBuku = async (req: Request, res: Response) => {
         try {
-            const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit, stok } = req.body;
+            const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit, stok, foto } = req.body;
             
             const result = await Buku.create({
                 judul_buku,
@@ -14,7 +14,8 @@ class BukuController extends Controller {
                 tahun_terbit,
                 penulis,
                 penerbit,
-                stok
+                stok,
+                foto
             });
 
             this.success(res, "Buku berhasil dibuat", result);

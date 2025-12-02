@@ -1,14 +1,15 @@
 // setup express.js
 import express from 'express';
 import router from './routes';
-import connectDB from './utils/db';
+import Database from "./utils/db";
 
 const app = express();
 const port = 3001;
 
 app.use(express.json());
 
-connectDB();
+// connect to database
+Database.connect();
 
 app.get('/', (req, res) => {
     res.json({ message: 'API is running...' });
