@@ -3,7 +3,7 @@ import Peminjaman from "../models/peminjaman.model";
 import mongoose from "mongoose";
 import Controller from "./controller";
 
-class PeminjamanController extends Controller {
+export class PeminjamanController extends Controller {
     buatPeminjaman = async (req: Request, res: Response) => {
         try {
             const { id_user, batas_pinjam, detail_peminjaman, tanggal_pinjam } = req.body as unknown as {

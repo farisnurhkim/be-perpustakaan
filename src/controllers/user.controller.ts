@@ -57,7 +57,7 @@ class UserController extends Controller {
                 password: hashedPassword,
             })
 
-            return this.success(res, "User registered successfully", result);
+            return this.success(res, "Registrasi berhasil!", result);
 
         } catch (error) {
             return this.error(res, "Internal server error", 500);

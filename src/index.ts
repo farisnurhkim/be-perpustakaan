@@ -2,11 +2,20 @@
 import express from 'express';
 import router from './routes';
 import Database from "./utils/db";
+import cors from 'cors';
 
 const app = express();
 const port = 3001;
 
 app.use(express.json());
+
+// cors
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://smartlib-ubharan.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+}))
 
 // connect to database
 Database.connect();
