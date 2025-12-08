@@ -35,6 +35,17 @@ const PeminjamanSchema = new mongoose.Schema<IPeminjaman>({
                 ret.user = ret.id_user; // Pindahkan isi
                 delete ret.id_user;     // Hapus field lama
             }
+
+            if (ret.detail_peminjaman && Array.isArray(ret.detail_peminjaman)) {
+                ret.detail_peminjaman = ret.detail_peminjaman.map((item:any) => {
+                    if (item.id_buku) {
+                        item.buku = item.id_buku;
+                        delete item.id_buku
+                    }
+                    return item;
+                });
+            }
+
             return ret;
         },
      },
