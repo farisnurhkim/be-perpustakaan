@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { IPengembalian } from "./pengembalian_model";
 
 export interface IPeminjaman extends mongoose.Document {
     barcode: string;
@@ -11,6 +12,7 @@ export interface IPeminjaman extends mongoose.Document {
         id_buku: mongoose.Types.ObjectId;
         jumlah: number;
     }>;
+    pengembalian?: IPengembalian;
 }
 
 const PeminjamanSchema = new mongoose.Schema<IPeminjaman>({
@@ -25,7 +27,25 @@ const PeminjamanSchema = new mongoose.Schema<IPeminjaman>({
         jumlah: { type: Number, required: true },
     }]
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { 
+        virtuals: true,
+        transform(doc, ret: any) {
+            if (ret.id_user) {
+                ret.user = ret.id_user; // Pindahkan isi
+                delete ret.id_user;     // Hapus field lama
+            }
+            return ret;
+        },
+     },
+    toObject: { virtuals: true }
+});
+
+PeminjamanSchema.virtual('pengembalian', {
+    ref: 'Pengembalian',
+    localField: '_id',
+    foreignField: 'id_peminjaman',
+    justOne: true
 });
 
 const Peminjaman = mongoose.model('Peminjaman', PeminjamanSchema);

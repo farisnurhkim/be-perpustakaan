@@ -124,7 +124,7 @@ export class PeminjamanController extends Controller {
 
     daftarSemuaPeminjaman = async(req: Request, res: Response) => {
         try {
-            const peminjamanList = await Peminjaman.find().populate('id_user').exec();
+            const peminjamanList = await Peminjaman.find().populate('id_user').populate('pengembalian').exec();
             this.success(res, "Daftar semua peminjaman berhasil diambil", peminjamanList);
 
         } catch (error) {
