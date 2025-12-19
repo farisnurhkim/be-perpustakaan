@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Peminjaman from "../models/peminjaman.model";
 import mongoose from "mongoose";
 import Controller from "./controller";
+import Buku from "../models/buku.model";
 
 export class PeminjamanController extends Controller {
     buatPeminjaman = async (req: Request, res: Response) => {
@@ -30,7 +31,10 @@ export class PeminjamanController extends Controller {
 
             const barcode = `PMJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-            const tgl_pinjam = tanggal_pinjam ? new Date(tanggal_pinjam) : new Date();
+            const tgl_pinjam = new Date(tanggal_pinjam);
+            const batasPinjamDate = new Date(batas_pinjam);
+            const now = new Date();
+
             if (isNaN(tgl_pinjam.getTime())) {
                 return this.error(res, "Tanggal pinjam tidak valid", 400);
             }
@@ -39,16 +43,19 @@ export class PeminjamanController extends Controller {
             const batas_ambil = new Date(tgl_pinjam);
             batas_ambil.setDate(batas_ambil.getDate() + 1);
 
-            const batasPinjamDate = new Date(batas_pinjam);
             if (isNaN(batasPinjamDate.getTime())) {
                 return this.error(res, "Batas pinjam tidak valid", 400);
             }
 
-            const now = new Date();
-            tgl_pinjam.setHours(0,0,0,0);
-            now.setHours(0,0,0,0);
+            tgl_pinjam.setHours(0, 0, 0, 0);
+            now.setHours(0, 0, 0, 0);
+            batasPinjamDate.setHours(0, 0, 0, 0);
             if (tgl_pinjam < now) {
-                return this.error(res, "Tanggal pinjam harus mulai/lebih dari hari sekarang", 400);
+                return this.error(
+                    res,
+                    "Tanggal pinjam harus mulai dari waktu sekarang",
+                    400
+                );
             }
 
             if (batasPinjamDate <= tgl_pinjam) {
@@ -65,8 +72,8 @@ export class PeminjamanController extends Controller {
             const result = await Peminjaman.create({
                 barcode,
                 id_user,
-                batas_pinjam: batasPinjamDate,
-                tgl_pinjam,
+                batas_pinjam: new Date(batas_pinjam),
+                tgl_pinjam: new Date(tanggal_pinjam),
                 batas_ambil,
                 detail_peminjaman
             });
@@ -78,14 +85,63 @@ export class PeminjamanController extends Controller {
     }
 
     konfirmasiPeminjaman = async (req: Request, res: Response) => {
+        const session = await mongoose.startSession();
+        session.startTransaction();
         try {
             const { barcode } = req.params;
-            const result = await Peminjaman.findOneAndUpdate({ barcode, status: "pending_peminjaman" }, { status: "dipinjam" }, { new: true });
-            if (!result) {
+
+            // Ambil peminjaman
+            const peminjaman = await Peminjaman.findOne(
+                { barcode, status: "pending_peminjaman" },
+                null,
+                { session }
+            );
+
+            if (!peminjaman) {
+                await session.abortTransaction();
                 return this.error(res, "Peminjaman tidak ditemukan atau sudah dikonfirmasi", 404);
             }
-            this.success(res, "Peminjaman berhasil di Konfirmasi", result);
-            
+
+            // Kurangi stok berdasarkan detail_peminjaman
+            for (const item of peminjaman.detail_peminjaman) {
+                const updated = await Buku.findOneAndUpdate(
+                    {
+                        _id: item.id_buku,
+                        stok: { $gte: item.jumlah }
+                    },
+                    {
+                        $inc: { stok: -item.jumlah }
+                    },
+                    { session, new: true }
+                );
+
+                if (!updated) {
+                    await session.abortTransaction();
+                    return this.error(
+                        res,
+                        "Stok buku tidak mencukupi",
+                        400
+                    );
+                }
+            }
+
+            // Update status peminjaman
+            peminjaman.status = "dipinjam";
+            await peminjaman.save({ session });
+
+            await session.commitTransaction();
+            session.endSession();
+
+            const result = await Peminjaman.findById(peminjaman._id)
+            .populate("id_user")
+            .populate("pengembalian")
+            .populate({
+                path: "detail_peminjaman.id_buku",
+                model: "Buku"
+            });
+
+            return this.success(res, "Peminjaman berhasil dikonfirmasi", result);
+
         } catch (error) {
             this.error(res, "Internal Server Error", 500);
         }
@@ -100,20 +156,21 @@ export class PeminjamanController extends Controller {
                 return this.error(res, "Peminjaman tidak ditemukan", 404);
             }
 
-            if (peminjaman.status === "dikembalikan" || peminjaman.status === "pending_pengembalian") {
+            if (peminjaman.status === "dikembalikan") {
                 return this.error(res, "Peminjaman tidak dalam status terlambat", 400);
             }
 
+            const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const now = new Date();
             const batasPinjam = new Date(peminjaman.batas_pinjam);
-
-            if (now <= batasPinjam) {
+            const nowDay = startOfDay(now);
+            const batasDay = startOfDay(batasPinjam);
+            if (nowDay <= batasDay) {
                 return this.success(res, "Tidak ada denda", { totalDenda: 0 });
             }
-
-            const diffTime = now.getTime() - batasPinjam.getTime();
-            const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-            const dendaPerhari = 3000; // denda per hari
+            const diffTime = nowDay.getTime() - batasDay.getTime();
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            const dendaPerhari = 2000;
             const totalDenda = diffDays * dendaPerhari;
             this.success(res, "Perhitungan denda berhasil", { totalDenda });
 
@@ -122,7 +179,7 @@ export class PeminjamanController extends Controller {
         }
     }
 
-    daftarSemuaPeminjaman = async(req: Request, res: Response) => {
+    daftarSemuaPeminjaman = async (req: Request, res: Response) => {
         try {
             const peminjamanList = await Peminjaman.find().populate('id_user').populate('pengembalian').populate({
                 path: "detail_peminjaman.id_buku",
@@ -135,12 +192,15 @@ export class PeminjamanController extends Controller {
         }
     }
 
-    daftarPeminjamanUser = async(req: Request, res: Response) => {
+    daftarPeminjamanUser = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
             const peminjamanList = await Peminjaman.find({
                 id_user: new mongoose.Types.ObjectId(id)
-            });
+            }).populate('id_user').populate('pengembalian').populate({
+                path: "detail_peminjaman.id_buku",
+                model: "Buku"
+            }).exec();
 
             this.success(res, "Daftar peminjaman user berhasil diambil", peminjamanList);
 
@@ -149,7 +209,7 @@ export class PeminjamanController extends Controller {
         }
     }
 
-     cariPeminjaman = async (req: Request, res: Response) => {
+    cariPeminjaman = async (req: Request, res: Response) => {
         try {
             const { barcode } = req.params;
             const peminjaman = await Peminjaman.findOne({ barcode });

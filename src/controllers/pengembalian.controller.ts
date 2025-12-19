@@ -2,10 +2,14 @@ import { Request, Response } from "express";
 import Peminjaman from "../models/peminjaman.model";
 import Pengembalian from "../models/pengembalian_model";
 import Controller from "./controller";
+import mongoose from "mongoose";
+import Buku from "../models/buku.model";
 
 class PengembalianController extends Controller {
 
     konfirmasiPengembalian = async (req: Request, res: Response) => {
+        const session = await mongoose.startSession();
+        session.startTransaction();
         try {
             const { barcode } = req.params;
             const { keterangan, tgl_kembali, denda } = req.body as unknown as {
@@ -14,7 +18,8 @@ class PengembalianController extends Controller {
                 denda: number;
             };
 
-            const peminjaman = await Peminjaman.findOne({ barcode });
+            const peminjaman = await Peminjaman.findOne({ barcode, status: "pending_pengembalian" }, null, { session });
+
             if (!peminjaman) {
                 return res.status(404).json({ message: "Peminjaman tidak ditemukan" });
             }
@@ -36,17 +41,48 @@ class PengembalianController extends Controller {
                 terlambat = true;
             }
 
+            // tambahkan stok berdasarkan detail_peminjaman
+            for (const item of peminjaman.detail_peminjaman) {
+                const updated = await Buku.findByIdAndUpdate(item.id_buku,
+                    {
+                        $inc: { stok: item.jumlah }
+                    },
+                    { session, new: true }
+                );
+
+                if (!updated) {
+                    await session.abortTransaction();
+                    return this.error(
+                        res,
+                        "Buku tida ditemukan",
+                        404
+                    );
+                }
+            }
+
             peminjaman.status = terlambat ? 'terlambat' : 'dikembalikan';
-            const resultPengembalian = await Pengembalian.create({
+            await Pengembalian.create({
                 id_peminjaman: peminjaman._id,
                 tgl_kembali: tgl_kembali ? new Date(tgl_kembali) : new Date(),
                 denda,
                 keterangan: keterangan || "",
             });
             await peminjaman.save();
+
+            await session.commitTransaction();
+            session.endSession();
+
+            const result = await Peminjaman.findById(peminjaman._id)
+                .populate("id_user")
+                .populate("pengembalian")
+                .populate({
+                    path: "detail_peminjaman.id_buku",
+                    model: "Buku"
+                });
+
             res.status(200).json({
                 message: "Pengembalian berhasil dikonfirmasi",
-                data: resultPengembalian,
+                data: result,
             });
 
 

@@ -63,13 +63,14 @@ class BukuController extends Controller {
     ubahBuku = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit } = req.body;
+            const { judul_buku, genre_buku, tahun_terbit, penulis, penerbit, foto } = req.body;
             const result = await Buku.findByIdAndUpdate(id, {
                 judul_buku,
                 genre_buku,
                 tahun_terbit,
                 penulis,
-                penerbit
+                penerbit,
+                foto
             }, { new: true });
             this.success(res, "Buku berhasil diubah", result);
         } catch (error) {

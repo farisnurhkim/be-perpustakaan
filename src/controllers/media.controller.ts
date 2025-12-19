@@ -7,6 +7,11 @@ class MediaController extends Controller {
         if (!req.file) {
             return this.error(res, "No file uploaded", 400);
         }
+
+        if (req.file.size > (5 * 1024 * 1024)) {
+            return this.error(res, "Ukuran File terlalu besar", 401)
+        }
+        
         try {
             const result = await CloudinaryService.uploadImage(req.file as Express.Multer.File);
             this.success(res, "File uploaded successfully", result);
