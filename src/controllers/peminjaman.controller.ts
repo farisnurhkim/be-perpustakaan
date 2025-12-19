@@ -149,8 +149,8 @@ export class PeminjamanController extends Controller {
 
     hitungDenda = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
-            const peminjaman = await Peminjaman.findById(id);
+            const { barcode } = req.params;
+            const peminjaman = await Peminjaman.findOne({barcode});
 
             if (!peminjaman) {
                 return this.error(res, "Peminjaman tidak ditemukan", 404);

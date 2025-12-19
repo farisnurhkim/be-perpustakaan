@@ -44,7 +44,7 @@ router.patch('/peminjaman/konfirmasi/:barcode', [auth.handle, aclMiddleware.hand
 router.get('/peminjaman/cari/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.cariPeminjaman);
 
 // hitung denda
-router.get('/peminjaman/hitung-denda/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.hitungDenda);
+router.get('/peminjaman/hitung-denda/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.hitungDenda);
 
 // Pengembalian
 router.patch('/pengembalian/proses/:barcode', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER])], pengembalianController.prosesPengembalian);
