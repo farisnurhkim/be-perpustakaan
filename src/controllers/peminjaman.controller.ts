@@ -157,7 +157,7 @@ export class PeminjamanController extends Controller {
             }
 
             if (peminjaman.status === "dikembalikan") {
-                return this.error(res, "Peminjaman tidak dalam status terlambat", 400);
+                return this.error(res, "Peminjaman sudah dikembalikan", 400);
             }
 
             const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
