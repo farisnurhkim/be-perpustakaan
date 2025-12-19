@@ -11,7 +11,7 @@ app.use(express.json());
 
 // cors
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://smartlib-ubharan.vercel.app'],
+    origin: ['http://localhost:3000', 'https://smartlib-ubharajaya.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
