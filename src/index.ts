@@ -3,6 +3,7 @@ import express from 'express';
 import router from './routes';
 import Database from "./utils/db";
 import cors from 'cors';
+import "./jobs/peminjaman.cron";
 
 const app = express();
 const port = 3001;

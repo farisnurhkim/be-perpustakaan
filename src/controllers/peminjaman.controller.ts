@@ -29,6 +29,17 @@ export class PeminjamanController extends Controller {
                 return this.error(res, "Maksimal peminjaman adalah 3 buku", 400);
             }
 
+            // cek stok per buku
+            for (const item of detail_peminjaman) {
+                const buku = await Buku.findById(item.id_buku);
+                if (!buku) {
+                    return this.error(res, `Buku tidak ditemukan`, 404);
+                }
+                if (item.jumlah > buku.stok) {
+                    return this.error(res, `Stok buku ${buku.judul_buku} tidak mencukupi`, 400);
+                }
+            }
+
             const barcode = `PMJ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
             const tgl_pinjam = new Date(tanggal_pinjam);
@@ -90,7 +101,6 @@ export class PeminjamanController extends Controller {
         try {
             const { barcode } = req.params;
 
-            // Ambil peminjaman
             const peminjaman = await Peminjaman.findOne(
                 { barcode, status: "pending_peminjaman" },
                 null,
@@ -100,6 +110,24 @@ export class PeminjamanController extends Controller {
             if (!peminjaman) {
                 await session.abortTransaction();
                 return this.error(res, "Peminjaman tidak ditemukan atau sudah dikonfirmasi", 404);
+            }
+
+            for (const item of peminjaman.detail_peminjaman) {
+                const buku = await Buku.findById(item.id_buku).session(session);
+                if (!buku) {
+                    peminjaman.status = "dibatalkan";
+                    await peminjaman.save({ session });
+                    await session.abortTransaction();
+                    session.endSession();
+                    return this.error(res, `Buku tidak ditemukan`, 404);
+                }
+                if (item.jumlah > buku.stok) {
+                    peminjaman.status = "stok_habis";
+                    await peminjaman.save({ session });
+                    await session.commitTransaction();
+                    session.endSession();
+                    return this.error(res, `Stok buku ${buku.judul_buku} tidak mencukupi`, 400);
+                }
             }
 
             // Kurangi stok berdasarkan detail_peminjaman
@@ -133,12 +161,12 @@ export class PeminjamanController extends Controller {
             session.endSession();
 
             const result = await Peminjaman.findById(peminjaman._id)
-            .populate("id_user")
-            .populate("pengembalian")
-            .populate({
-                path: "detail_peminjaman.id_buku",
-                model: "Buku"
-            });
+                .populate("id_user")
+                .populate("pengembalian")
+                .populate({
+                    path: "detail_peminjaman.id_buku",
+                    model: "Buku"
+                });
 
             return this.success(res, "Peminjaman berhasil dikonfirmasi", result);
 
@@ -150,7 +178,7 @@ export class PeminjamanController extends Controller {
     hitungDenda = async (req: Request, res: Response) => {
         try {
             const { barcode } = req.params;
-            const peminjaman = await Peminjaman.findOne({barcode});
+            const peminjaman = await Peminjaman.findOne({ barcode });
 
             if (!peminjaman) {
                 return this.error(res, "Peminjaman tidak ditemukan", 404);
