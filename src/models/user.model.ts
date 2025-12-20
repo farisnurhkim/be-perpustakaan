@@ -13,7 +13,6 @@ export interface IUser extends mongoose.Document {
     nama: string;
     email: string;
     password: string;
-    tgl_lahir: Date;
     alamat: Alamat;
     no_telp: string;
     status_user: "admin" | "member";
@@ -24,7 +23,6 @@ const userSchema = new Schema<IUser>({
     nama: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    tgl_lahir: { type: Date, required: false, default: null },
     alamat: {
         no_rumah: { type: String, required: false, default: null },
         nama_jalan: { type: String, required: false, default: null },

@@ -85,40 +85,62 @@ class UserController extends Controller {
                 status_user: user.status_user,
                 email: user.email,
             });
- 
+
             return this.success(res, "Login successful", token);
 
 
-        }catch (error) {
+        } catch (error) {
             return this.error(res, "Internal server error", 500);
         }
     }
 
-   profile = async (req: Request, res: Response) => {
+    profile = async (req: Request, res: Response) => {
         try {
             const user = (req as unknown as IReqUser).user;
             const result = await User.findById(user?.id);
             return this.success(res, "User fetched successfully", result);
-            
+
         } catch (error) {
             return this.error(res, "Internal server error", 500);
         }
     }
 
     ubahProfil = async (req: Request, res: Response) => {
-        const { nama, email, no_telp, tgl_lahir } = req.body;
         try {
             const { id } = req.params;
-            const result = await User.findByIdAndUpdate(id, {
-                nama,
-                email,
-                no_telp,
-                tgl_lahir,
-            }, {new: true});
+            const { nama, email, no_telp, password } = req.body;
+
+            const updateData: any = {};
+
+            if (nama) updateData.nama = nama;
+            if (email) updateData.email = email;
+            if (no_telp) updateData.no_telp = no_telp;
+
+            if (password) {
+                if (password.length < 6) {
+                    return this.error(res, "Password harus memiliki minimal 6 karakter", 400);
+                }
+                const salt = 10;
+
+                updateData.password = await bcrypt.hash(password, salt);
+            }
+
+            const result = await User.findByIdAndUpdate(
+                id,
+                updateData,
+                { new: true }
+            ).select('-password');
+
+            if (!result) {
+                return this.error(res, "User tidak ditemukan", 404);
+            }
 
             return this.success(res, "Profile kamu berhasil diubah", result);
 
-        } catch (error) {
+        } catch (error: any) {
+            if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+                return this.error(res, "Email sudah terdaftar, silakan gunakan email lain.", 400);
+            }
             return this.error(res, "Internal server error", 500);
         }
     }
@@ -153,7 +175,7 @@ class UserController extends Controller {
             }, { new: true });
 
             return this.success(res, "Alamat berhasil diubah", result);
-            
+
         } catch (error) {
             return this.error(res, "Internal server error", 500);
         }
