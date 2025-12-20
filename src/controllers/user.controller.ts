@@ -145,20 +145,6 @@ class UserController extends Controller {
         }
     }
 
-    blokirAkun = async (req: Request, res: Response) => {
-        const { id } = req.params;
-        try {
-            const result = await User.findByIdAndUpdate(id, {
-                di_blokir: true
-            }, { new: true });
-
-            return this.success(res, "Akun berhasil diblokir", result);
-
-        } catch (error) {
-            return this.error(res, "Internal server error", 500);
-        }
-    }
-
     ubahAlamat = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { no_rumah, nama_jalan, kelurahan, kecamatan, kota } = req.body as unknown as AlamatBody;

@@ -20,7 +20,6 @@ router.post('/user/register', UserController.register);
 router.post('/user/login', UserController.login);
 router.get('/user/profile', auth.handle, UserController.profile);
 router.patch('/user/ubah/:id', auth.handle, UserController.ubahProfil);
-router.patch('/user/blokir/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], UserController.blokirAkun);
 router.patch('/user/ubah-alamat/:id', auth.handle, UserController.ubahAlamat);
 
 // Media
