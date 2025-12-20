@@ -30,12 +30,12 @@ router.delete('/media/delete', [auth.handle, aclMiddleware.handle([USER_STATUS.A
 // Buku
 router.post('/buku/buat', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.buatBuku);
 router.get('/buku/list', BukuController.listBuku);
+router.get('/buku/populer', BukuController.bukuPopuler);
 router.get('/buku/:id', BukuController.lihatBuku);
 router.patch('/buku/ubah/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.ubahBuku);
 router.delete('/buku/hapus/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.hapusBuku);
 router.patch('/buku/tambah-stok/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.tambahStok);
 router.patch('/buku/kurangi-stok/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], BukuController.kurangiStok);
-
 // Peminjaman
 router.get('/peminjaman/list', [auth.handle, aclMiddleware.handle([USER_STATUS.ADMIN])], PeminjamanController.daftarSemuaPeminjaman);
 router.get('/peminjaman/user/:id', [auth.handle, aclMiddleware.handle([USER_STATUS.MEMBER, USER_STATUS.ADMIN])], PeminjamanController.daftarPeminjamanUser);

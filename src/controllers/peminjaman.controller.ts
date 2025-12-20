@@ -3,6 +3,7 @@ import Peminjaman from "../models/peminjaman.model";
 import mongoose from "mongoose";
 import Controller from "./controller";
 import Buku from "../models/buku.model";
+import User from "../models/user.model";
 
 export class PeminjamanController extends Controller {
     buatPeminjaman = async (req: Request, res: Response) => {
@@ -21,6 +22,21 @@ export class PeminjamanController extends Controller {
                 id_user: new mongoose.Types.ObjectId(id_user),
                 status: { $in: ["dipinjam", "pending_peminjaman"] }
             });
+
+            const user = await User.findById(id_user);
+            if (!user) {
+                return this.error(res, "User tidak ditemukan", 404);
+            }
+
+            if (!user.alamat || !user.alamat.nama_jalan || !user.alamat.kota || !user.alamat.kecamatan || !user.alamat.kelurahan || !user.alamat.no_rumah) {
+                return this.error(res, "Lengkapi alamat sebelum melakukan peminjaman", 400);
+            }
+
+            if (!user.no_telp || user.no_telp.trim() === "") {
+                return this.error(res, "Tambahkan nomor telepon sebelum melakukan peminjaman", 400);
+            }
+
+
             if (peminjamanAktif) {
                 return this.error(res, "Kamu masih memiliki peminjaman aktif", 400);
             }
