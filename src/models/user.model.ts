@@ -16,7 +16,6 @@ export interface IUser extends mongoose.Document {
     alamat: Alamat;
     no_telp: string;
     status_user: "admin" | "member";
-    di_blokir: boolean;
 }
 
 const userSchema = new Schema<IUser>({
@@ -32,7 +31,6 @@ const userSchema = new Schema<IUser>({
     },
     no_telp: { type: String, required: false, default: null },
     status_user: { type: String, enum: ["admin", "member"], default: "member" },
-    di_blokir: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
