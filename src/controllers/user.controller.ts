@@ -145,6 +145,7 @@ class UserController extends Controller {
         }
     }
 
+
     ubahAlamat = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { no_rumah, nama_jalan, kelurahan, kecamatan, kota } = req.body as unknown as AlamatBody;

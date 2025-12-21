@@ -41,6 +41,11 @@ export class PeminjamanController extends Controller {
                 return this.error(res, "Kamu masih memiliki peminjaman aktif", 400);
             }
 
+            const totalBuku = detail_peminjaman.reduce((sum, item) => sum + item.jumlah, 0);
+            if (totalBuku > 3) {
+                return this.error(res, "Maksimal peminjaman adalah 3 buku", 400);
+            }
+
             if (detail_peminjaman.length > 3) {
                 return this.error(res, "Maksimal peminjaman adalah 3 buku", 400);
             }
