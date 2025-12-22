@@ -230,7 +230,7 @@ export class PeminjamanController extends Controller {
 
     daftarSemuaPeminjaman = async (req: Request, res: Response) => {
         try {
-            const peminjamanList = await Peminjaman.find().populate('id_user').populate('pengembalian').populate({
+            const peminjamanList = await Peminjaman.find().sort({createdAt: -1}).populate('id_user').populate('pengembalian').populate({
                 path: "detail_peminjaman.id_buku",
                 model: "Buku"
             }).exec();
@@ -246,7 +246,7 @@ export class PeminjamanController extends Controller {
             const { id } = req.params;
             const peminjamanList = await Peminjaman.find({
                 id_user: new mongoose.Types.ObjectId(id)
-            }).populate('id_user').populate('pengembalian').populate({
+            }).sort({createdAt: -1}).populate('id_user').populate('pengembalian').populate({
                 path: "detail_peminjaman.id_buku",
                 model: "Buku"
             }).exec();
