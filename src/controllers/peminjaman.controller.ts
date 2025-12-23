@@ -20,7 +20,7 @@ export class PeminjamanController extends Controller {
 
             const peminjamanAktif = await Peminjaman.findOne({
                 id_user: new mongoose.Types.ObjectId(id_user),
-                status: { $in: ["dipinjam", "pending_peminjaman"] }
+                status: { $in: ["dipinjam", "pending_peminjaman", "pending_pengembalian"] }
             });
 
             const user = await User.findById(id_user);
